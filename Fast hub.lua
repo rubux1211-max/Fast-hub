@@ -10,13 +10,19 @@ local MS=Instance.new("UIStroke",MF)MS.Color=AC MS.Thickness=1.5 MS.Transparency
 local TB=Instance.new("Frame",MF)TB.Size=UDim2.new(1,0,0,35)TB.BackgroundColor3=FR TB.BorderSizePixel=0
 Instance.new("UICorner",TB).CornerRadius=UDim.new(0,10)
 local TBT=Instance.new("TextLabel",TB)TBT.Size=UDim2.new(1,-80,1,0)TBT.Position=UDim2.new(0,12,0,0)TBT.Text="⚡ FAST HUB // V1.0"TBT.TextColor3=TX TBT.BackgroundTransparency=1 TBT.Font=Enum.Font.GothamBold TBT.TextSize=14 TBT.TextXAlignment=Enum.TextXAlignment.Left
+MF.BackgroundTransparency=0.25
+TB.BackgroundTransparency=0.25
 local function createTopBtn(t,c,p,cb)local b=Instance.new("TextButton",TB)b.Size=UDim2.new(0,22,0,22)b.Position=p b.BackgroundColor3=c b.Text=t b.TextColor3=Color3.new(1,1,1)b.Font=Enum.Font.GothamBold b.TextSize=13 Instance.new("UICorner",b).CornerRadius=UDim.new(0,6)b.MouseButton1Click:Connect(cb)return b end
 local OB=Instance.new("TextButton",SG)OB.Size=UDim2.new(0,60,0,60)OB.Position=UDim2.new(0,20,0.5,-30)OB.BackgroundColor3=AC OB.Text="⚡"OB.TextColor3=TX OB.Font=Enum.Font.GothamBold OB.TextSize=20 OB.Visible=false Instance.new("UICorner",OB).CornerRadius=UDim.new(1,0)
 local OBS=Instance.new("UIStroke",OB)OBS.Color=TX OBS.Thickness=1.5
-OB.MouseButton1Click:Connect(function()OB.Visible=false MF.Visible=true TS:Create(MF,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()end)
+local OD,OG
+OB.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then OD=i.Position OG=false end end)
+OB.InputChanged:Connect(function(i)if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.Mouse)then local p=i.Position if(p-OD).Magnitude>12 then OG=true end if OG then OB.Position=UDim2.fromOffset(p.X-OB.AbsoluteSize.X/2,p.Y-OB.AbsoluteSize.Y/2)end end end)
+OB.InputEnded:Connect(function(i)if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1)then if not OG then OB.Visible=false MF.Visible=true TS:Create(MF,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()end OD=nil end end)
 createTopBtn("–",Color3.fromRGB(60,60,70),UDim2.new(1,-56,0,6.5),function()TS:Create(MF,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,0,0,0)}):Play()task.wait(0.2)MF.Visible=false OB.Visible=true OB.Size=UDim2.new(0,0,0,0)TS:Create(OB,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,60,0,60)}):Play()end)
 createTopBtn("X",Color3.fromRGB(220,60,60),UDim2.new(1,-28,0,6.5),function()_G.FarmActive,_G.RebirthActive,_G.LootActive=false,false,false SG:Destroy()end)
 local TF=Instance.new("Frame",MF)TF.Size=UDim2.new(0,100,1,-35)TF.Position=UDim2.new(0,0,0,35)TF.BackgroundColor3=FR TF.BorderSizePixel=0
+TF.BackgroundTransparency=0.25
 local TFL=Instance.new("UIListLayout",TF)TFL.Padding=UDim.new(0,5)
 local PC=Instance.new("Frame",MF)PC.Size=UDim2.new(1,-120,1,-45)PC.Position=UDim2.new(0,110,0,40)PC.BackgroundTransparency=1
 local PKG=RS:WaitForChild("Packages")local IDX=PKG:WaitForChild("_Index")local SS=IDX["acecateer_knit@1.7.2"].knit.Services.StrengthService local CE=SS.RE.ClickRequested local R2=IDX["acecateer_knit@1.7.2"].knit.Services.RebirtService local RE=R2.RE.RebirthButtonClicked
