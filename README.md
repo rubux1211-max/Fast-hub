@@ -1,9 +1,10 @@
 # Fast-hub
 This the official github repository for Fast hub.
 
-The official discord of Fast hub will be released soon.
+The official discord server of Fast hub has been released 
 
-We will add a link to that channel when its public.
+Discord link:https://discord.gg/TfxeteXda
+
 
 If you encounter any bugs please let us know so we can completely squash that bug so it never returns.
 
