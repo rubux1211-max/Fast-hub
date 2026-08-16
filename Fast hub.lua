@@ -1,8 +1,9 @@
-local P,CG,TS,RS=game:GetService("Players"),game:GetService("CoreGui"),game:GetService("TweenService"),game:GetService("ReplicatedStorage")
+local P,CG,TS,RS,LGT=game:GetService("Players"),game:GetService("CoreGui"),game:GetService("TweenService"),game:GetService("ReplicatedStorage"),game:GetService("Lighting")
 local LP=P.LocalPlayer
 local PG=LP:FindFirstChildOfClass("PlayerGui") or CG
 if PG:FindFirstChild("PremiumHub") then PG.PremiumHub:Destroy() end
 local SG=Instance.new("ScreenGui",PG)SG.Name="PremiumHub"SG.ResetOnSpawn=false
+if LGT:FindFirstChild("PremiumHubBlur") then LGT.PremiumHubBlur:Destroy() end local BLUR=Instance.new("BlurEffect",LGT)BLUR.Name="PremiumHubBlur"BLUR.Size=6
 local BG=Color3.fromRGB(15,15,18)local FR=Color3.fromRGB(22,22,26)local AC=Color3.fromRGB(0,255,136)local TX=Color3.fromRGB(240,240,245)local DK=Color3.fromRGB(140,140,145)local OFF=Color3.fromRGB(45,45,50)
 local MF=Instance.new("Frame",SG)MF.Size=UDim2.new(0,380,0,220)MF.Position=UDim2.new(0.5,-190,0.4,-110)MF.BackgroundColor3=BG MF.BorderSizePixel=0 MF.Active=true MF.Draggable=true
 Instance.new("UICorner",MF).CornerRadius=UDim.new(0,10)
@@ -18,9 +19,9 @@ local OBS=Instance.new("UIStroke",OB)OBS.Color=TX OBS.Thickness=1.5
 local OD,OG
 OB.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then OD=i.Position OG=false end end)
 OB.InputChanged:Connect(function(i)if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.Mouse)then local p=i.Position if(p-OD).Magnitude>12 then OG=true end if OG then OB.Position=UDim2.fromOffset(p.X-OB.AbsoluteSize.X/2,p.Y-OB.AbsoluteSize.Y/2)end end end)
-OB.InputEnded:Connect(function(i)if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1)then if not OG then OB.Visible=false MF.Visible=true TS:Create(MF,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()end OD=nil end end)
-createTopBtn("–",Color3.fromRGB(60,60,70),UDim2.new(1,-56,0,6.5),function()TS:Create(MF,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,0,0,0)}):Play()task.wait(0.2)MF.Visible=false OB.Visible=true OB.Size=UDim2.new(0,0,0,0)TS:Create(OB,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,60,0,60)}):Play()end)
-createTopBtn("X",Color3.fromRGB(220,60,60),UDim2.new(1,-28,0,6.5),function()_G.FarmActive,_G.RebirthActive,_G.LootActive=false,false,false SG:Destroy()end)
+OB.InputEnded:Connect(function(i)if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1)then if not OG then OB.Visible=false MF.Visible=true BLUR.Size=6 TS:Create(MF,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()end OD=nil end end)
+createTopBtn("–",Color3.fromRGB(60,60,70),UDim2.new(1,-56,0,6.5),function()BLUR.Size=0 TS:Create(MF,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,0,0,0)}):Play()task.wait(0.2)MF.Visible=false OB.Visible=true OB.Size=UDim2.new(0,0,0,0)TS:Create(OB,TweenInfo.new(0.3,Enum.EasingStyle.Back),{Size=UDim2.new(0,60,0,60)}):Play()end)
+createTopBtn("X",Color3.fromRGB(220,60,60),UDim2.new(1,-28,0,6.5),function()_G.FarmActive,_G.RebirthActive,_G.LootActive=false,false,false BLUR:Destroy()SG:Destroy()end)
 local TF=Instance.new("Frame",MF)TF.Size=UDim2.new(0,100,1,-35)TF.Position=UDim2.new(0,0,0,35)TF.BackgroundColor3=FR TF.BorderSizePixel=0
 TF.BackgroundTransparency=0.25
 local TFL=Instance.new("UIListLayout",TF)TFL.Padding=UDim.new(0,5)
