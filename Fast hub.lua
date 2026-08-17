@@ -1,14 +1,55 @@
 local P,CG,TS,RS=game:GetService("Players"),game:GetService("CoreGui"),game:GetService("TweenService"),game:GetService("ReplicatedStorage")
 local LP=P.LocalPlayer
 local PG=LP:FindFirstChildOfClass("PlayerGui") or CG
-if PG:FindFirstChild("PremiumHub") then PG.PremiumHub:Destroy() end
-local SG=Instance.new("ScreenGui",PG)SG.Name="PremiumHub"SG.ResetOnSpawn=false
+if PG:FindFirstChild("FastHub") then PG.FastHub:Destroy() end
+local SG=Instance.new("ScreenGui",PG)SG.Name="FastHub"SG.ResetOnSpawn=false
 local BG=Color3.fromRGB(10,12,17)local FR=Color3.fromRGB(18,21,28)local AC=Color3.fromRGB(0,255,136)local AC2=Color3.fromRGB(0,230,190)local TX=Color3.fromRGB(240,244,250)local DK=Color3.fromRGB(130,140,155)local OFF=Color3.fromRGB(40,44,54)
 local function GRAD(o,c1,c2,rot)local g=Instance.new("UIGradient",o)g.Color=ColorSequence.new(c1,c2)g.Rotation=rot or 90 return g end
 local function STK(o,c,t,tr)local s=Instance.new("UIStroke",o)s.Color=c or Color3.new(1,1,1)s.Thickness=t or 1 s.Transparency=tr or 0 return s end
 local function COR(o,r)local c=Instance.new("UICorner",o)c.CornerRadius=UDim.new(0,r or 10)return c end
-local MF=Instance.new("Frame",SG)MF.Size=UDim2.new(0,380,0,220)MF.Position=UDim2.new(0.5,-190,0.4,-110)MF.BackgroundColor3=BG MF.BackgroundTransparency=0.35 MF.BorderSizePixel=0 MF.Active=true MF.Draggable=true MF.ZIndex=1
-local HALO=Instance.new("Frame",SG)HALO.Size=UDim2.new(0,396,0,236)HALO.Position=UDim2.new(0.5,-198,0.4,-118)HALO.BackgroundColor3=AC HALO.BackgroundTransparency=0.85 HALO.BorderSizePixel=0 HALO.ZIndex=0
+-- ==== LAUNCHER ====
+local LOPEN=true
+local LFH=Instance.new("Frame",SG)LFH.Size=UDim2.new(0,316,0,356)LFH.Position=UDim2.new(0.5,-158,0.4,-178)LFH.BackgroundColor3=AC LFH.BackgroundTransparency=0.88 LFH.BorderSizePixel=0 LFH.ZIndex=0
+COR(LFH,16)STK(LFH,AC,1,0.75)
+local LF=Instance.new("Frame",SG)LF.Size=UDim2.new(0,300,0,340)LF.Position=UDim2.new(0.5,-150,0.4,-170)LF.BackgroundColor3=BG LF.BackgroundTransparency=0.35 LF.BorderSizePixel=0 LF.Active=true LF.Draggable=true LF.ZIndex=1
+COR(LF,14)STK(LF,AC,1,0.4)GRAD(LF,BG,Color3.fromRGB(16,20,28),90)
+local LH=Instance.new("Frame",LF)LH.Size=UDim2.new(1,0,0,40)LH.BackgroundColor3=FR LH.BackgroundTransparency=0.35 LH.BorderSizePixel=0
+COR(LH,14)GRAD(LH,Color3.fromRGB(22,26,34),Color3.fromRGB(13,16,22),90)
+local LLOGO=Instance.new("Frame",LH)LLOGO.Size=UDim2.new(0,18,0,18)LLOGO.Position=UDim2.new(0,10,0,11)LLOGO.BackgroundColor3=AC COR(LLOGO,9)GRAD(LLOGO,AC,AC2,90)STK(LLOGO,Color3.new(1,1,1),1,0.7)
+local LLO=Instance.new("TextLabel",LLOGO)LLO.Size=UDim2.new(1,0,1,0)LLO.Text="⚡"LLO.TextColor3=BG LLO.Font=Enum.Font.GothamBold LLO.TextSize=11 LLO.BackgroundTransparency=1
+local LT=Instance.new("TextLabel",LH)LT.Size=UDim2.new(0,110,1,0)LT.Position=UDim2.new(0,34,0,0)LT.Text="FAST HUB"LT.TextColor3=TX LT.BackgroundTransparency=1 LT.Font=Enum.Font.GothamBlack LT.TextSize=14 LT.TextXAlignment=Enum.TextXAlignment.Left
+GRAD(LT,Color3.fromRGB(255,255,255),Color3.fromRGB(120,255,200),0)
+local VP=Instance.new("Frame",LH)VP.Size=UDim2.new(0,40,0,18)VP.Position=UDim2.new(1,-48,0,11)VP.BackgroundColor3=AC COR(VP,9)
+local VPT=Instance.new("TextLabel",VP)VPT.Size=UDim2.new(1,0,1,0)VPT.Text="V1.0"VPT.TextColor3=BG VPT.Font=Enum.Font.GothamBold VPT.TextSize=10 VPT.BackgroundTransparency=1
+local LC=Instance.new("Frame",LF)LC.Size=UDim2.new(1,-16,1,-92)LC.Position=UDim2.new(0,8,0,48)LC.BackgroundTransparency=1
+local GP=Instance.new("Frame",LC)GP.Size=UDim2.new(1,0,1,0)GP.BackgroundTransparency=1 Instance.new("UIListLayout",GP).Padding=UDim.new(0,10)
+local SF=Instance.new("Frame",GP)SF.Size=UDim2.new(1,0,0,36)SF.BackgroundColor3=OFF SF.BackgroundTransparency=0.35 SF.BorderSizePixel=0 COR(SF,10)STK(SF,Color3.new(1,1,1),1,0.85)
+local SI=Instance.new("TextLabel",SF)SI.Size=UDim2.new(0,24,0,24)SI.Position=UDim2.new(0,6,0,6)SI.Text="🔍"SI.BackgroundTransparency=1 SI.TextSize=12
+local SB=Instance.new("TextBox",SF)SB.Size=UDim2.new(1,-40,1,0)SB.Position=UDim2.new(0,32,0,0)SB.BackgroundTransparency=1 SB.PlaceholderText="Search games..."SB.PlaceholderColor3=DK SB.Text=""SB.TextColor3=TX SB.Font=Enum.Font.Gotham SB.TextSize=13 SB.TextXAlignment=Enum.TextXAlignment.Left
+local GB=Instance.new("TextButton",GP)GB.Size=UDim2.new(1,0,0,44)GB.BackgroundColor3=FR GB.BackgroundTransparency=0.4 GB.BorderSizePixel=0 GB.Text=""COR(GB,10)GRAD(GB,Color3.fromRGB(24,28,38),Color3.fromRGB(16,19,27),90)STK(GB,Color3.new(1,1,1),1,0.85)
+local GBH=Instance.new("Frame",GB)GBH.Size=UDim2.new(0,20,0,20)GBH.Position=UDim2.new(0,10,0,12)GBH.BackgroundColor3=AC GBH.BackgroundTransparency=0.75 GBH.BorderSizePixel=0 COR(GBH,10)
+local GD=Instance.new("Frame",GB)GD.Size=UDim2.new(0,12,0,12)GD.Position=UDim2.new(0,14,0,16)GD.BackgroundColor3=AC COR(GD,6)STK(GD,Color3.new(1,1,1),1,0.5)
+local GBT=Instance.new("TextLabel",GB)GBT.Size=UDim2.new(1,-40,1,0)GBT.Position=UDim2.new(0,36,0,0)GBT.Text="+1 cut grass adventure"GBT.TextColor3=TX GBT.Font=Enum.Font.GothamBold GBT.TextSize=13 GBT.TextXAlignment=Enum.TextXAlignment.Left GBT.BackgroundTransparency=1
+local IP=Instance.new("Frame",LC)IP.Size=UDim2.new(1,0,1,0)IP.BackgroundTransparency=1 IP.Visible=false Instance.new("UIListLayout",IP).Padding=UDim.new(0,6)
+local function IROW(txt)local F=Instance.new("Frame",IP)F.Size=UDim2.new(1,0,0,26)F.BackgroundTransparency=1 local d=Instance.new("Frame",F)d.Size=UDim2.new(0,6,0,6)d.Position=UDim2.new(0,4,0,10)d.BackgroundColor3=AC COR(d,3)local l=Instance.new("TextLabel",F)l.Size=UDim2.new(1,-20,1,0)l.Position=UDim2.new(0,16,0,0)l.Text=txt l.TextColor3=TX l.Font=Enum.Font.Gotham l.TextSize=12 l.TextXAlignment=Enum.TextXAlignment.Left l.BackgroundTransparency=1 end
+local IT1=Instance.new("TextLabel",IP)IT1.Size=UDim2.new(1,0,0,24)IT1.Text="FAST HUB V1.0"IT1.TextColor3=TX IT1.Font=Enum.Font.GothamBlack IT1.TextSize=16 IT1.TextXAlignment=Enum.TextXAlignment.Left IT1.BackgroundTransparency=1
+local IT2=Instance.new("TextLabel",IP)IT2.Size=UDim2.new(1,0,0,16)IT2.Text="Auto-Farm & Utility Script"IT2.TextColor3=DK IT2.Font=Enum.Font.Gotham IT2.TextSize=11 IT2.TextXAlignment=Enum.TextXAlignment.Left IT2.BackgroundTransparency=1
+local SEP=Instance.new("Frame",IP)SEP.Size=UDim2.new(1,0,0,1)SEP.BackgroundColor3=Color3.new(1,1,1)SEP.BackgroundTransparency=0.85 SEP.BorderSizePixel=0
+IROW("Auto Strength")IROW("Auto Rebirth")IROW("Auto Loot")IROW("World Teleports")IROW("Anti-AFK")
+local IT3=Instance.new("TextLabel",IP)IT3.Size=UDim2.new(1,0,0,20)IT3.Text="Made for Cut Grass Adventure"IT3.TextColor3=DK IT3.Font=Enum.Font.Gotham IT3.TextSize=11 IT3.TextXAlignment=Enum.TextXAlignment.Left IT3.BackgroundTransparency=1
+local LTABS=Instance.new("Frame",LF)LTABS.Size=UDim2.new(1,-16,0,36)LTABS.Position=UDim2.new(0,8,1,-44)LTABS.BackgroundTransparency=1
+local BTL=Instance.new("TextButton",LTABS)BTL.Size=UDim2.new(0.5,-3,1,0)BTL.BackgroundColor3=AC BTL.Text="Games"BTL.TextColor3=BG BTL.Font=Enum.Font.GothamBold BTL.TextSize=12 COR(BTL,10)STK(BTL,Color3.new(1,1,1),1,0.6)
+local BTI=Instance.new("TextButton",LTABS)BTI.Size=UDim2.new(0.5,-3,1,0)BTI.Position=UDim2.new(0.5,3,0,0)BTI.BackgroundColor3=OFF BTI.BackgroundTransparency=0.3 BTI.Text="Info"BTI.TextColor3=DK BTI.Font=Enum.Font.GothamBold BTI.TextSize=12 COR(BTI,10)
+local function setL(g)if g then GP.Visible=true IP.Visible=false TS:Create(BTL,TweenInfo.new(0.15),{BackgroundColor3=AC,BackgroundTransparency=0}):Play()BTL.TextColor3=BG TS:Create(BTI,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()BTI.TextColor3=DK else GP.Visible=false IP.Visible=true TS:Create(BTI,TweenInfo.new(0.15),{BackgroundColor3=AC,BackgroundTransparency=0}):Play()BTI.TextColor3=BG TS:Create(BTL,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()BTL.TextColor3=DK end end
+BTL.MouseButton1Click:Connect(function()setL(true)end)
+BTI.MouseButton1Click:Connect(function()setL(false)end)
+local function showLauncher()LOPEN=true LF.Visible=true LFH.Visible=true end
+local function hideLauncher()LOPEN=false LF.Visible=false LFH.Visible=false end
+SB.TextChanged:Connect(function()local q=string.lower(SB.Text)GB.Visible=q==""or string.find("+1 cut grass adventure",q,1,true)~=nil end)
+-- ==== HUB ====
+local HUBOPEN=false
+local MF=Instance.new("Frame",SG)MF.Size=UDim2.new(0,380,0,220)MF.Position=UDim2.new(0.5,-190,0.4,-110)MF.BackgroundColor3=BG MF.BackgroundTransparency=0.35 MF.BorderSizePixel=0 MF.Active=true MF.Draggable=true MF.ZIndex=1 MF.Visible=false
+local HALO=Instance.new("Frame",SG)HALO.Size=UDim2.new(0,396,0,236)HALO.Position=UDim2.new(0.5,-198,0.4,-118)HALO.BackgroundColor3=AC HALO.BackgroundTransparency=0.85 HALO.BorderSizePixel=0 HALO.ZIndex=0 HALO.Visible=false
 COR(HALO,14)STK(HALO,AC,1,0.75)COR(MF,12)STK(MF,AC,1.5,0.4)GRAD(MF,BG,Color3.fromRGB(16,20,28),90)
 local function BRK(p)local b=Instance.new("Frame",MF)b.Size=UDim2.new(0,14,0,14)b.Position=p b.BackgroundTransparency=1 b.ZIndex=7 STK(b,AC,1.5,0.3)COR(b,4)end
 BRK(UDim2.new(0,7,0,7))BRK(UDim2.new(1,-21,0,7))BRK(UDim2.new(0,7,1,-21))BRK(UDim2.new(1,-21,1,-21))
@@ -23,15 +64,16 @@ local OB=Instance.new("TextButton",SG)OB.Size=UDim2.new(0,60,0,60)OB.Position=UD
 local OH=Instance.new("Frame",SG)OH.Size=UDim2.new(0,76,0,76)OH.Position=UDim2.new(0,12,0.5,-38)OH.BackgroundColor3=AC OH.BackgroundTransparency=0.8 OH.BorderSizePixel=0 OH.Visible=false COR(OH,38)
 local ORR=Instance.new("Frame",SG)ORR.Size=UDim2.new(0,52,0,52)ORR.Position=UDim2.new(0,24,0.5,-26)ORR.BackgroundTransparency=1 ORR.Visible=false STK(ORR,AC,1,0.5)COR(ORR,26)
 local OI=Instance.new("TextLabel",OB)OI.Size=UDim2.new(1,0,1,0)OI.Text="⚡"OI.TextColor3=Color3.new(1,1,1)OI.Font=Enum.Font.GothamBold OI.TextSize=24 OI.BackgroundTransparency=1
-local function SPIN(f,t)local function s()if not f.Parent then return end local tw=TS:Create(f,TweenInfo.new(t,Enum.EasingStyle.Linear),{Rotation=f.Rotation+360})tw:Play()task.wait(t)s()end task.spawn(s)end
-local function PULSE(f,a,b,t)local function p()if not f.Parent then return end TS:Create(f,TweenInfo.new(t,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=b}):Play()task.wait(t)TS:Create(f,TweenInfo.new(t,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=a}):Play()task.wait(t)p()end task.spawn(p)end
-SPIN(ORR,10)PULSE(OH,0.75,0.55,1.2)PULSE(HALO,0.88,0.7,1.6)
+local function SPIN(f,t,g)task.spawn(function()while f.Parent do while not g() do task.wait(0.2) end TS:Create(f,TweenInfo.new(t,Enum.EasingStyle.Linear),{Rotation=f.Rotation+360}):Play()task.wait(t)end end)end
+local function PULSE(f,a,b,t,g)task.spawn(function()while f.Parent do while not g() do task.wait(0.2) end TS:Create(f,TweenInfo.new(t,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=b}):Play()task.wait(t)TS:Create(f,TweenInfo.new(t,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=a}):Play()task.wait(t)end end)end
+SPIN(ORR,10,function()return HUBOPEN end)PULSE(OH,0.75,0.55,1.2,function()return HUBOPEN end)PULSE(HALO,0.88,0.7,1.6,function()return HUBOPEN end)PULSE(LFH,0.9,0.75,1.4,function()return LOPEN end)
+local function showHub()hideLauncher()HUBOPEN=true MF.Visible=true HALO.Visible=true MF.Size=UDim2.new(0,0,0,0)TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()end
 local OD,OG
 OB.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then OD=i.Position OG=false end end)
 OB.InputChanged:Connect(function(i)if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.Mouse)then local p=i.Position if(p-OD).Magnitude>12 then OG=true end if OG then OB.Position=UDim2.fromOffset(p.X-30,p.Y-30)end end end)
-OB.InputEnded:Connect(function(i)if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1)then if not OG then OB.Visible=false OH.Visible=false ORR.Visible=false MF.Visible=true HALO.Visible=true TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()end OD=nil end end)
-createTopBtn("–",Color3.fromRGB(90,220,160),UDim2.new(1,-56,0,6.5),function()TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,0,0,0)}):Play()task.wait(0.2)MF.Visible=false HALO.Visible=false OB.Visible=true OH.Visible=true ORR.Visible=true OB.Size=UDim2.new(0,0,0,0)TS:Create(OB,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,60,0,60)}):Play()end)
-createTopBtn("X",Color3.fromRGB(255,90,90),UDim2.new(1,-28,0,6.5),function()_G.FarmActive,_G.RebirthActive,_G.LootActive=false,false,false SG:Destroy()end)
+OB.InputEnded:Connect(function(i)if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1)then if not OG then OB.Visible=false OH.Visible=false ORR.Visible=false MF.Visible=true HALO.Visible=true MF.Size=UDim2.new(0,0,0,0)TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()end OD=nil end end)
+createTopBtn("–",Color3.fromRGB(90,220,160),UDim2.new(1,-56,0,6.5),function()MF.Visible=false HALO.Visible=false OB.Visible=true OH.Visible=true ORR.Visible=true OB.Size=UDim2.new(0,0,0,0)TS:Create(OB,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,60,0,60)}):Play()end)
+createTopBtn("X",Color3.fromRGB(255,90,90),UDim2.new(1,-28,0,6.5),function()_G.FarmActive,_G.RebirthActive,_G.LootActive=false,false,false HUBOPEN=false MF.Visible=false HALO.Visible=false OB.Visible=false OH.Visible=false ORR.Visible=false showLauncher()end)
 local TF=Instance.new("Frame",MF)TF.Size=UDim2.new(0,100,1,-35)TF.Position=UDim2.new(0,0,0,35)TF.BackgroundColor3=FR TF.BackgroundTransparency=0.35 TF.BorderSizePixel=0
 local TFL=Instance.new("UIListLayout",TF)TFL.Padding=UDim.new(0,6)
 local PC=Instance.new("Frame",MF)PC.Size=UDim2.new(1,-120,1,-45)PC.Position=UDim2.new(0,110,0,40)PC.BackgroundTransparency=1
@@ -99,3 +141,6 @@ SN(false)RP()_G.AntiGameplayPaused=false
 end)
 local MP=AddTab("Misc")
 CreateToggle(MP,"Anti-AFK Avoidance","AntiAFK",function()local VU=game:GetService("VirtualUser")LP.Idled:Connect(function()if _G.AntiAFK then VU:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)task.wait(1)VU:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)end end)end)
+GB.MouseButton1Click:Connect(showHub)
+GB.MouseEnter:Connect(function()TS:Create(GB,TweenInfo.new(0.12),{Size=UDim2.new(1,-6,0,44)}):Play()end)
+GB.MouseLeave:Connect(function()TS:Create(GB,TweenInfo.new(0.12),{Size=UDim2.new(1,0,0,44)}):Play()end)
