@@ -1,7 +1,9 @@
 -- ============================================================
---  FAST HUB V1.0  (hardened build)
---  Fixes: CoreGui parenting, non-blocking service init,
---         Activated click, pcall guards, console diagnostics
+--  FAST HUB V1.0 — MOBILE HARDENED (Delta/iOS)
+--  * ALL buttons use Activated (touch + mouse)
+--  * every connection is crash-isolated (hook)
+--  * search filter uses polling (no TextBox events)
+--  * stage prints so you can see how far it loads
 -- ============================================================
 local P=game:GetService("Players")
 local TS=game:GetService("TweenService")
@@ -9,8 +11,23 @@ local RS=game:GetService("ReplicatedStorage")
 local UIS=game:GetService("UserInputService")
 local PPS=game:GetService("ProximityPromptService")
 local LP=P.LocalPlayer
+print("[FastHub] boot OK")
 
--- GUI parent: CoreGui first so game GUIs can never swallow clicks
+-- safe connection helper: never lets one bad event kill the script
+local function hook(obj,ev,fn)
+	local ok,s=pcall(function()
+		local sig=obj[ev]
+		if typeof(sig)=="RBXScriptSignal" then
+			sig:Connect(fn)
+		else
+			error("no signal: "..ev)
+		end
+	end)
+	if not ok then print("[FastHub] ! hook failed: "..ev.." -> "..tostring(s)) end
+	return ok
+end
+
+-- GUI parent: CoreGui first (game GUIs can't block clicks)
 local SG
 local okCG=pcall(function()
 	local cg=game:GetService("CoreGui")
@@ -28,6 +45,7 @@ SG.Name="FastHub"
 SG.ResetOnSpawn=false
 SG.IgnoreGuiInset=true
 SG.DisplayOrder=999
+print("[FastHub] GUI ready (parent: "..SG.Parent.Name..")")
 
 local BG=Color3.fromRGB(10,12,17)
 local FR=Color3.fromRGB(18,21,28)
@@ -60,7 +78,7 @@ local HUBOPEN=false
 local LOPEN=true
 local showHub,hideLauncher,showLauncher,closeAll
 
--- ==== HUB (built first so it's ready instantly, hidden) ====
+-- ==== HUB UI (hidden until opened) ====
 local MF=Instance.new("Frame",SG)
 MF.Size=UDim2.new(0,380,0,220)
 MF.Position=UDim2.new(0.5,-190,0.4,-110)
@@ -84,7 +102,6 @@ STK(HALO,AC,1,0.75)
 COR(MF,12)
 STK(MF,AC,1.5,0.4)
 GRAD(MF,BG,Color3.fromRGB(16,20,28),90)
-
 local function BRK(p)
 	local b=Instance.new("Frame",MF)
 	b.Size=UDim2.new(0,14,0,14)
@@ -98,7 +115,6 @@ BRK(UDim2.new(0,7,0,7))
 BRK(UDim2.new(1,-21,0,7))
 BRK(UDim2.new(0,7,1,-21))
 BRK(UDim2.new(1,-21,1,-21))
-
 local TB=Instance.new("Frame",MF)
 TB.Size=UDim2.new(1,0,0,35)
 TB.BackgroundColor3=FR
@@ -130,7 +146,6 @@ TBT.Font=Enum.Font.GothamBlack
 TBT.TextSize=13
 TBT.TextXAlignment=Enum.TextXAlignment.Left
 GRAD(TBT,Color3.fromRGB(255,255,255),Color3.fromRGB(120,255,200),0)
-
 local function createTopBtn(t,c,p,cb)
 	local b=Instance.new("TextButton",TB)
 	b.Size=UDim2.new(0,22,0,22)
@@ -143,16 +158,17 @@ local function createTopBtn(t,c,p,cb)
 	b.TextSize=12
 	COR(b,7)
 	STK(b,Color3.new(1,1,1),1,0.8)
-	b.MouseButton1Click:Connect(cb)
-	b.MouseEnter:Connect(function()
-		TS:Create(b,TweenInfo.new(0.15),{BackgroundColor3=c,BackgroundTransparency=0}):Play()
-	end)
-	b.MouseLeave:Connect(function()
-		TS:Create(b,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()
+	hook(b,"Activated",cb)
+	pcall(function()
+		b.MouseEnter:Connect(function()
+			TS:Create(b,TweenInfo.new(0.15),{BackgroundColor3=c,BackgroundTransparency=0}):Play()
+		end)
+		b.MouseLeave:Connect(function()
+			TS:Create(b,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()
+		end)
 	end)
 	return b
 end
-
 local OB=Instance.new("TextButton",SG)
 OB.Size=UDim2.new(0,60,0,60)
 OB.Position=UDim2.new(0,20,0.5,-30)
@@ -184,7 +200,6 @@ OI.TextColor3=Color3.new(1,1,1)
 OI.Font=Enum.Font.GothamBold
 OI.TextSize=24
 OI.BackgroundTransparency=1
-
 local function SPIN(f,t,g)
 	task.spawn(function()
 		while f.Parent do
@@ -208,8 +223,8 @@ end
 SPIN(ORR,10,function()return HUBOPEN end)
 PULSE(OH,0.75,0.55,1.2,function()return HUBOPEN end)
 PULSE(HALO,0.88,0.7,1.6,function()return HUBOPEN end)
-
 showHub=function()
+	print("[FastHub] >>> opening hub")
 	hideLauncher()
 	HUBOPEN=true
 	MF.Visible=true
@@ -217,8 +232,9 @@ showHub=function()
 	MF.Size=UDim2.new(0,0,0,0)
 	TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()
 end
+print("[FastHub] hub UI built")
 
--- ==== LAUNCHER ====
+-- ==== LAUNCHER UI ====
 local LFH=Instance.new("Frame",SG)
 LFH.Size=UDim2.new(0,316,0,360)
 LFH.Position=UDim2.new(0.5,-158,0.4,-180)
@@ -294,7 +310,6 @@ LX.Font=Enum.Font.GothamBold
 LX.TextSize=12
 COR(LX,7)
 STK(LX,Color3.new(1,1,1),1,0.8)
-
 local LC=Instance.new("Frame",LF)
 LC.Size=UDim2.new(1,-16,1,-96)
 LC.Position=UDim2.new(0,8,0,48)
@@ -310,12 +325,12 @@ SF.BackgroundTransparency=0.35
 SF.BorderSizePixel=0
 COR(SF,10)
 STK(SF,Color3.new(1,1,1),1,0.85)
-local SI=Instance.new("TextLabel",SF)
-SI.Size=UDim2.new(0,26,0,26)
-SI.Position=UDim2.new(0,7,0,7)
-SI.Text="🔍"
-SI.BackgroundTransparency=1
-SI.TextSize=13
+local SIC=Instance.new("TextLabel",SF)
+SIC.Size=UDim2.new(0,26,0,26)
+SIC.Position=UDim2.new(0,7,0,7)
+SIC.Text="🔍"
+SIC.BackgroundTransparency=1
+SIC.TextSize=13
 local SB=Instance.new("TextBox",SF)
 SB.Size=UDim2.new(1,-44,1,0)
 SB.Position=UDim2.new(0,34,0,0)
@@ -364,7 +379,6 @@ GBO.BackgroundTransparency=1
 GBO.Text=""
 GBO.BorderSizePixel=0
 GBO.ZIndex=5
-
 local IP=Instance.new("Frame",LC)
 IP.Size=UDim2.new(1,0,1,0)
 IP.BackgroundTransparency=1
@@ -391,7 +405,6 @@ STL.TextColor3=DK
 STL.Font=Enum.Font.GothamBold
 STL.TextSize=11
 STL.BackgroundTransparency=1
-
 local LTABS=Instance.new("Frame",LF)
 LTABS.Size=UDim2.new(1,-16,0,38)
 LTABS.Position=UDim2.new(0,8,1,-42)
@@ -415,28 +428,32 @@ BTI.TextColor3=DK
 BTI.Font=Enum.Font.GothamBold
 BTI.TextSize=13
 COR(BTI,10)
+print("[FastHub] launcher UI built")
 
 -- ==== LAUNCHER WIRING ====
 local function setL(g)
 	if g then
 		GP.Visible=true
 		IP.Visible=false
-		TS:Create(BTL,TweenInfo.new(0.15),{BackgroundColor3=AC,BackgroundTransparency=0}):Play()
+		pcall(function()
+			TS:Create(BTL,TweenInfo.new(0.15),{BackgroundColor3=AC,BackgroundTransparency=0}):Play()
+			TS:Create(BTI,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()
+		end)
 		BTL.TextColor3=BG
-		TS:Create(BTI,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()
 		BTI.TextColor3=DK
 	else
 		GP.Visible=false
 		IP.Visible=true
-		TS:Create(BTI,TweenInfo.new(0.15),{BackgroundColor3=AC,BackgroundTransparency=0}):Play()
+		pcall(function()
+			TS:Create(BTI,TweenInfo.new(0.15),{BackgroundColor3=AC,BackgroundTransparency=0}):Play()
+			TS:Create(BTL,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()
+		end)
 		BTI.TextColor3=BG
-		TS:Create(BTL,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()
 		BTL.TextColor3=DK
 	end
 end
-BTL.MouseButton1Click:Connect(function()setL(true)end)
-BTI.MouseButton1Click:Connect(function()setL(false)end)
-
+hook(BTL,"Activated",function()setL(true)end)
+hook(BTI,"Activated",function()setL(false)end)
 hideLauncher=function()
 	LOPEN=false
 	LF.Visible=false
@@ -448,59 +465,64 @@ showLauncher=function()
 	LFH.Visible=true
 end
 closeAll=function()
+	print("[FastHub] closing (X tapped)")
 	_G.FarmActive,_G.RebirthActive,_G.LootActive=false,false,false
 	SG:Destroy()
 end
-
-SB.TextChanged:Connect(function()
-	local q=string.lower(SB.Text)
-	GBRow.Visible=(q=="")or string.find("+1 cut grass adventure",q,1,true)~=nil
+-- search filter: polling loop (no TextBox events — that's what was crashing)
+task.spawn(function()
+	while SB and SB.Parent do
+		task.wait(0.4)
+		local q=string.lower(SB.Text or "")
+		GBRow.Visible=(q=="")or string.find("+1 cut grass adventure",q,1,true)~=nil
+	end
 end)
-
--- Fixed click handler: Activated + flash feedback + console log
-GBO.Activated:Connect(function()
-	if SB:IsFocused() then SB:ReleaseFocus() end
-	print("[FastHub] Opening hub...")
-	TS:Create(GBRow,TweenInfo.new(0.1),{BackgroundColor3=AC,BackgroundTransparency=0.1}):Play()
-	task.delay(0.15,function()
-		TS:Create(GBRow,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(24,28,38),BackgroundTransparency=0.4}):Play()
+-- the game card — THE button you've been tapping
+hook(GBO,"Activated",function()
+	print("[FastHub] >>> GAME CARD TAPPED")
+	pcall(function()
+		if SB:IsFocused() then SB:ReleaseFocus() end
+		TS:Create(GBRow,TweenInfo.new(0.1),{BackgroundColor3=AC,BackgroundTransparency=0.1}):Play()
+		task.delay(0.15,function()
+			TS:Create(GBRow,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(24,28,38),BackgroundTransparency=0.4}):Play()
+		end)
 	end)
 	showHub()
 end)
-
-LX.MouseButton1Click:Connect(closeAll)
-LX.MouseEnter:Connect(function()
-	TS:Create(LX,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(255,90,90),BackgroundTransparency=0}):Play()
-end)
-LX.MouseLeave:Connect(function()
-	TS:Create(LX,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()
-end)
-GBO.MouseEnter:Connect(function()
-	TS:Create(GBRow,TweenInfo.new(0.12),{Size=UDim2.new(1,-4,0,48)}):Play()
-end)
-GBO.MouseLeave:Connect(function()
-	TS:Create(GBRow,TweenInfo.new(0.12),{Size=UDim2.new(1,0,0,48)}):Play()
+hook(LX,"Activated",closeAll)
+pcall(function()
+	LX.MouseEnter:Connect(function()
+		TS:Create(LX,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(255,90,90),BackgroundTransparency=0}):Play()
+	end)
+	LX.MouseLeave:Connect(function()
+		TS:Create(LX,TweenInfo.new(0.15),{BackgroundColor3=OFF,BackgroundTransparency=0.3}):Play()
+	end)
+	GBO.MouseEnter:Connect(function()
+		TS:Create(GBRow,TweenInfo.new(0.12),{Size=UDim2.new(1,-4,0,48)}):Play()
+	end)
+	GBO.MouseLeave:Connect(function()
+		TS:Create(GBRow,TweenInfo.new(0.12),{Size=UDim2.new(1,0,0,48)}):Play()
+	end)
 end)
 PULSE(LFH,0.9,0.75,1.4,function()return LOPEN end)
-
-print("[FastHub] UI built — launcher visible. Wiring hub...")
+print("[FastHub] launcher wiring done")
 
 -- ==== HUB WIRING ====
 local OD,OG
-OB.InputBegan:Connect(function(i)
+hook(OB,"InputBegan",function(i)
 	if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then
 		OD=i.Position
 		OG=false
 	end
 end)
-OB.InputChanged:Connect(function(i)
+hook(OB,"InputChanged",function(i)
 	if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.Mouse)then
 		local p=i.Position
 		if(p-OD).Magnitude>12 then OG=true end
 		if OG then OB.Position=UDim2.fromOffset(p.X-30,p.Y-30) end
 	end
 end)
-OB.InputEnded:Connect(function(i)
+hook(OB,"InputEnded",function(i)
 	if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1)then
 		if not OG then
 			OB.Visible=false
@@ -533,9 +555,10 @@ createTopBtn("X",Color3.fromRGB(255,90,90),UDim2.new(1,-28,0,6.5),function()
 	ORR.Visible=false
 	showLauncher()
 end)
+print("[FastHub] hub wiring done")
 
--- ==== GAME LOGIC (protected: any error is printed, launcher stays alive) ====
-local okGL=xpcall(function()
+-- ==== GAME LOGIC (fully protected) ====
+xpcall(function()
 
 local TF=Instance.new("Frame",MF)
 TF.Size=UDim2.new(0,100,1,-35)
@@ -550,29 +573,30 @@ PC.Size=UDim2.new(1,-120,1,-45)
 PC.Position=UDim2.new(0,110,0,40)
 PC.BackgroundTransparency=1
 
--- Non-blocking, version-agnostic knit service lookup (no more freeze)
+-- non-blocking knit service lookup (never freezes)
 local CE,RE
-local function InitServices()
+do
 	local PKG=RS:FindFirstChild("Packages")
-	if not PKG then print("[FastHub] ! Packages not found — farm buttons will be inert") return end
-	local IDX=PKG:FindFirstChild("_Index")
-	if not IDX then print("[FastHub] ! _Index not found") return end
-	for _,mod in ipairs(IDX:GetChildren()) do
-		if mod:FindFirstChild("knit") then
-			local S=mod.knit:FindFirstChild("Services")
-			if S then
-				local SS=S:FindFirstChild("StrengthService")
-				if SS and SS:FindFirstChild("RE") then CE=SS.RE:FindFirstChild("ClickRequested") end
-				local R2=S:FindFirstChild("RebirtService")
-				if R2 and R2:FindFirstChild("RE") then RE=R2.RE:FindFirstChild("RebirthButtonClicked") end
+	if PKG then
+		local IDX=PKG:FindFirstChild("_Index")
+		if IDX then
+			for _,mod in ipairs(IDX:GetChildren()) do
+				if mod:FindFirstChild("knit") then
+					local S=mod.knit:FindFirstChild("Services")
+					if S then
+						local SS=S:FindFirstChild("StrengthService")
+						if SS and SS:FindFirstChild("RE") then CE=SS.RE:FindFirstChild("ClickRequested") end
+						local R2=S:FindFirstChild("RebirtService")
+						if R2 and R2:FindFirstChild("RE") then RE=R2.RE:FindFirstChild("RebirthButtonClicked") end
+					end
+					break
+				end
 			end
-			break
 		end
 	end
 	if CE then print("[FastHub] StrengthService OK") else print("[FastHub] ! StrengthService not found") end
 	if RE then print("[FastHub] RebirtService OK") else print("[FastHub] ! RebirtService not found") end
 end
-InitServices()
 
 local tabs={}
 local cur=nil
@@ -600,7 +624,7 @@ local function AddTab(n)
 	ind.BackgroundColor3=AC
 	ind.BackgroundTransparency=1
 	COR(ind,2)
-	b.MouseButton1Click:Connect(function()
+	hook(b,"Activated",function()
 		for _,t in pairs(tabs) do
 			t.pg.Visible=false
 			t.b.TextColor3=DK
@@ -656,7 +680,7 @@ local function CreateToggle(pp,txt,gv,cb)
 	COR(ind,7)
 	STK(ind,BG,1,0)
 	_G[gv]=false
-	sw.MouseButton1Click:Connect(function()
+	hook(sw,"Activated",function()
 		_G[gv]=not _G[gv]
 		if _G[gv] then
 			TS:Create(sw,TweenInfo.new(0.2),{BackgroundColor3=AC,BackgroundTransparency=0}):Play()
@@ -781,8 +805,8 @@ local function CWS(pp)
 	COR(b2,8)
 	STK(b2,Color3.new(1,1,1),1,0.9)
 	WBS[#WBS+1]={b1,b2}
-	b1.MouseButton1Click:Connect(function()_G.SelectedWorld=1 RW()end)
-	b2.MouseButton1Click:Connect(function()_G.SelectedWorld=2 RW()end)
+	hook(b1,"Activated",function()_G.SelectedWorld=1 RW()end)
+	hook(b2,"Activated",function()_G.SelectedWorld=2 RW()end)
 end
 
 local TPg=AddTab("Teleport")
@@ -800,12 +824,14 @@ local function CB(pp,txt,c1,c2,cb)
 	COR(b,10)
 	GRAD(b,c1,c2,90)
 	STK(b,Color3.new(1,1,1),1,0.85)
-	b.MouseButton1Click:Connect(cb)
-	b.MouseEnter:Connect(function()
-		TS:Create(b,TweenInfo.new(0.12),{Size=UDim2.new(1,-8,0,40)}):Play()
-	end)
-	b.MouseLeave:Connect(function()
-		TS:Create(b,TweenInfo.new(0.12),{Size=UDim2.new(1,0,0,40)}):Play()
+	hook(b,"Activated",cb)
+	pcall(function()
+		b.MouseEnter:Connect(function()
+			TS:Create(b,TweenInfo.new(0.12),{Size=UDim2.new(1,-8,0,40)}):Play()
+		end)
+		b.MouseLeave:Connect(function()
+			TS:Create(b,TweenInfo.new(0.12),{Size=UDim2.new(1,0,0,40)}):Play()
+		end)
 	end)
 end
 CB(TPg,"Teleport to Spawn",Color3.fromRGB(70,120,255),Color3.fromRGB(40,70,190),function()
@@ -969,14 +995,16 @@ CreateToggle(MP,"Anti-AFK Avoidance","AntiAFK",function()
 	end)
 end)
 
-print("[FastHub] Hub tabs ready (Farming / Teleport / Loot / Misc).")
 STL.Text="Status: READY"
 STL.TextColor3=AC
+print("[FastHub] tabs ready: Farming / Teleport / Loot / Misc")
 
 end, function(err)
 	STL.Text="Status: ERROR"
 	STL.TextColor3=Color3.fromRGB(255,90,90)
-	print("[FastHub] ERROR: "..tostring(err))
+	print("[FastHub] game-logic ERROR: "..tostring(err))
 end)
 
-print("[FastHub] Script load finished. Status:", okGL and "OK" or "ERROR (see above)")
+-- manual fallback: type  _G.FastHubOpen()  in Delta's exec box if the card won't tap
+_G.FastHubOpen=showHub
+print("[FastHub] ALL DONE — tap the game card now")
