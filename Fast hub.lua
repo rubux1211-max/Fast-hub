@@ -1,7 +1,7 @@
 -- ============================================================
---  FAST HUB V1.0 — FINAL MOBILE+PC BUILD
---  Fixes: scrollable tabs, moving aura borders (both hub +
---  launcher), iOS clipboard fallback, centered buttons
+--  FAST HUB V1.0 — FINAL FIXES
+--  Scrolling works, OH/ORR follows OB, drag works on touch,
+--  notification shows, updated Discord link
 -- ============================================================
 local P=game:GetService("Players")
 local TS=game:GetService("TweenService")
@@ -21,42 +21,39 @@ local function hook(obj,ev,fn)
 	return ok
 end
 
--- iOS-safe copy: tries all executors, then shows link in notification
+-- iOS-safe clipboard
 local function copyText(txt)
 	local ok
 	ok=pcall(function() syn.writeclipboard(txt) end) if ok then return end
 	ok=pcall(function() setclipboard(txt) end) if ok then return end
 	ok=pcall(function() clipboard.set(txt) end) if ok then return end
 	ok=pcall(function() toclipboard(txt) end) if ok then return end
-	-- iOS fallback: show full link so user can manually copy
 	print("[FastHub] link: "..txt)
 end
 
--- Notification overlay (shows message for N seconds)
+-- Notification (bigger frame, simpler, always visible)
 local function notify(msg,sec)
 	local nf=Instance.new("Frame",SG)
-	nf.Size=UDim2.new(0,300,0,50)
-	nf.Position=UDim2.new(0.5,-150,0.75,-25)
+	nf.Size=UDim2.new(0,320,0,72)
+	nf.Position=UDim2.new(0.5,-160,0.5,-36)
 	nf.BackgroundColor3=Color3.fromRGB(10,12,17)
-	nf.BackgroundTransparency=0.1
+	nf.BackgroundTransparency=0.05
 	nf.BorderSizePixel=0
-	nf.ZIndex=50
-	COR(nf,10)
-	STK(nf,Color3.fromRGB(0,255,136),1.5,0.3)
+	nf.ZIndex=100
+	COR(nf,12)
+	STK(nf,Color3.fromRGB(0,255,136),1.5,0.25)
 	GRAD(nf,Color3.fromRGB(10,12,17),Color3.fromRGB(18,21,28),90)
 	local nl=Instance.new("TextLabel",nf)
-	nl.Size=UDim2.new(1,-10,1,0)
-	nl.Position=UDim2.new(0,5,0,0)
+	nl.Size=UDim2.new(1,-12,1,0)
+	nl.Position=UDim2.new(0,6,0,0)
 	nl.Text=msg
 	nl.TextColor3=Color3.fromRGB(240,244,250)
 	nl.Font=Enum.Font.GothamBold
 	nl.TextSize=11
 	nl.BackgroundTransparency=1
-	nl.ZIndex=51
+	nl.ZIndex=101
 	nl.TextWrapped=true
 	task.delay(sec or 6,function()
-		TS:Create(nf,TweenInfo.new(0.3,Enum.EasingStyle.Sine),{BackgroundTransparency=1}):Play()
-		task.wait(0.3)
 		nf:Destroy()
 	end)
 end
@@ -127,7 +124,7 @@ COR(MF,12)
 STK(MF,AC,1.5,0.4)
 GRAD(MF,BG,Color3.fromRGB(16,20,28),90)
 
--- HALO: parented to MF, moves automatically when MF is dragged
+-- HALO is child of MF — moves automatically when MF is dragged
 local HALO=Instance.new("Frame",MF)
 HALO.Size=UDim2.new(1,16,1,16)
 HALO.Position=UDim2.new(0,-8,0,-8)
@@ -161,7 +158,7 @@ COR(TB,12)
 GRAD(TB,Color3.fromRGB(22,26,34),Color3.fromRGB(13,16,22),90)
 local LOGO=Instance.new("Frame",TB)
 LOGO.Size=UDim2.new(0,18,0,18)
-LOGO.Position=UDim2.new(0,10,0,8.5)
+LOGO.Position=UDim2.new(0,8,0,8.5)
 LOGO.BackgroundColor3=AC
 COR(LOGO,9)
 GRAD(LOGO,AC,AC2,90)
@@ -175,7 +172,7 @@ LO.TextSize=11
 LO.BackgroundTransparency=1
 local TBT=Instance.new("TextLabel",TB)
 TBT.Size=UDim2.new(0,180,1,0)
-TBT.Position=UDim2.new(0,34,0,0)
+TBT.Position=UDim2.new(0,32,0,0)
 TBT.Text="FAST HUB V1.0"
 TBT.TextColor3=TX
 TBT.BackgroundTransparency=1
@@ -208,6 +205,7 @@ local function createTopBtn(t,c,p,cb)
 	return b
 end
 
+-- === MINIMIZED CIRCLE (OB with OH and ORR as children — they move together) ===
 local OB=Instance.new("TextButton",SG)
 OB.Size=UDim2.new(0,60,0,60)
 OB.Position=UDim2.new(0,20,0.5,-30)
@@ -217,21 +215,6 @@ OB.Visible=false
 COR(OB,30)
 GRAD(OB,AC,AC2,90)
 STK(OB,Color3.new(1,1,1),1.5,0.6)
-local OH=Instance.new("Frame",SG)
-OH.Size=UDim2.new(0,76,0,76)
-OH.Position=UDim2.new(0,12,0.5,-38)
-OH.BackgroundColor3=AC
-OH.BackgroundTransparency=0.8
-OH.BorderSizePixel=0
-OH.Visible=false
-COR(OH,38)
-local ORR=Instance.new("Frame",SG)
-ORR.Size=UDim2.new(0,52,0,52)
-ORR.Position=UDim2.new(0,24,0.5,-26)
-ORR.BackgroundTransparency=1
-ORR.Visible=false
-STK(ORR,AC,1,0.5)
-COR(ORR,26)
 local OI=Instance.new("TextLabel",OB)
 OI.Size=UDim2.new(1,0,1,0)
 OI.Text="⚡"
@@ -239,6 +222,23 @@ OI.TextColor3=Color3.new(1,1,1)
 OI.Font=Enum.Font.GothamBold
 OI.TextSize=24
 OI.BackgroundTransparency=1
+
+-- OH and ORR parented to OB so they follow OB when dragged
+local OH=Instance.new("Frame",OB)
+OH.Size=UDim2.new(0,76,0,76)
+OH.Position=UDim2.new(0,-8,0,-8)
+OH.BackgroundColor3=AC
+OH.BackgroundTransparency=0.8
+OH.BorderSizePixel=0
+OH.Visible=false
+COR(OH,38)
+local ORR=Instance.new("Frame",OB)
+ORR.Size=UDim2.new(0,52,0,52)
+ORR.Position=UDim2.new(0,4,0,4)
+ORR.BackgroundTransparency=1
+ORR.Visible=false
+STK(ORR,AC,1,0.5)
+COR(ORR,26)
 
 local function SPIN(f,t,g)
 	task.spawn(function()
@@ -272,7 +272,7 @@ showHub=function()
 	TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,360,0,220)}):Play()
 end
 
--- ==== LAUNCHER (no separate LFH — glow is child of LF) ====
+-- ==== LAUNCHER ====
 local LF=Instance.new("Frame",SG)
 LF.Size=UDim2.new(0,300,0,344)
 LF.Position=UDim2.new(0.5,-150,0.4,-172)
@@ -285,8 +285,6 @@ LF.ZIndex=1
 COR(LF,14)
 STK(LF,AC,1,0.4)
 GRAD(LF,BG,Color3.fromRGB(16,20,28),90)
-
--- Launcher glow: parented to LF, moves automatically
 local LFGLOW=Instance.new("Frame",LF)
 LFGLOW.Size=UDim2.new(1,16,1,16)
 LFGLOW.Position=UDim2.new(0,-8,0,-8)
@@ -307,7 +305,7 @@ COR(LH,14)
 GRAD(LH,Color3.fromRGB(22,26,34),Color3.fromRGB(13,16,22),90)
 local LLOGO=Instance.new("Frame",LH)
 LLOGO.Size=UDim2.new(0,18,0,18)
-LLOGO.Position=UDim2.new(0,10,0,11)
+LLOGO.Position=UDim2.new(0,8,0,11)
 LLOGO.BackgroundColor3=AC
 COR(LLOGO,9)
 GRAD(LLOGO,AC,AC2,90)
@@ -321,7 +319,7 @@ LLO.TextSize=11
 LLO.BackgroundTransparency=1
 local LTT=Instance.new("TextLabel",LH)
 LTT.Size=UDim2.new(0,110,1,0)
-LTT.Position=UDim2.new(0,34,0,0)
+LTT.Position=UDim2.new(0,32,0,0)
 LTT.Text="FAST HUB"
 LTT.TextColor3=TX
 LTT.BackgroundTransparency=1
@@ -452,7 +450,7 @@ GRAD(DCB,Color3.fromRGB(88,101,242),Color3.fromRGB(60,70,200),90)
 STK(DCB,Color3.new(1,1,1),1.5,0.5)
 local DCBL=Instance.new("TextLabel",IP)
 DCBL.Size=UDim2.new(1,0,0,20)
-DCBL.Text="https://discord.gg/zGKNwPCJ7"
+DCBL.Text="https://discord.gg/JszAabwvS"
 DCBL.TextColor3=DK
 DCBL.Font=Enum.Font.Gotham
 DCBL.TextSize=9
@@ -527,7 +525,7 @@ closeAll=function()
 	SG:Destroy()
 end
 
--- Search polling (safe — no TextBox event crash)
+-- Search polling
 task.spawn(function()
 	while SB and SB.Parent do
 		task.wait(0.4)
@@ -548,17 +546,16 @@ hook(GBO,"Activated",function()
 	showHub()
 end)
 
--- Close button (X) in launcher
 hook(LX,"Activated",closeAll)
 
--- Discord button in launcher Info tab
+-- Discord button (launcher) — NEW LINK
 hook(DCB,"Activated",function()
-	local link="https://discord.gg/zGKNwPCJ7"
+	local link="https://discord.gg/JszAabwvS"
 	copyText(link)
 	notify("discord server invite link copied."..link.."                   Paste it into your browser<3.",6)
 end)
 
--- Hover effects (silent if they fail)
+-- Hover effects
 pcall(function()
 	LX.MouseEnter:Connect(function()
 		TS:Create(LX,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(255,90,90),BackgroundTransparency=0}):Play()
@@ -583,23 +580,30 @@ end)
 print("[FastHub] launcher done")
 
 -- ==== HUB WIRING ====
-local OD,OG
+-- FIXED: delta-based drag for the minimize circle (no more jumping)
+local dragStartPos, dragStartTouch, isDraggingOB
 hook(OB,"InputBegan",function(i)
 	if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then
-		OD=i.Position
-		OG=false
+		dragStartPos = OB.Position
+		dragStartTouch = Vector2.new(i.Position.X, i.Position.Y)
+		isDraggingOB = false
 	end
 end)
 hook(OB,"InputChanged",function(i)
-	if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.Mouse)then
-		local p=i.Position
-		if(p-OD).Magnitude>12 then OG=true end
-		if OG then OB.Position=UDim2.fromOffset(p.X-30,p.Y-30) end
+	if dragStartTouch and (i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.Mouse) then
+		local current = Vector2.new(i.Position.X, i.Position.Y)
+		if (current - dragStartTouch).Magnitude > 12 then
+			isDraggingOB = true
+			local dx = current.X - dragStartTouch.X
+			local dy = current.Y - dragStartTouch.Y
+			OB.Position = UDim2.fromOffset(dragStartPos.X.Offset + dx, dragStartPos.Y.Offset + dy)
+		end
 	end
 end)
 hook(OB,"InputEnded",function(i)
-	if OD and(i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1)then
-		if not OG then
+	if dragStartTouch and (i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1) then
+		if not isDraggingOB then
+			-- Tap — reopen hub
 			OB.Visible=false
 			OH.Visible=false
 			ORR.Visible=false
@@ -607,9 +611,10 @@ hook(OB,"InputEnded",function(i)
 			MF.Size=UDim2.new(0,0,0,0)
 			TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,360,0,220)}):Play()
 		end
-		OD=nil
+		dragStartTouch = nil
 	end
 end)
+
 createTopBtn("–",Color3.fromRGB(90,220,160),UDim2.new(1,-56,0,5),function()
 	MF.Visible=false
 	HALO.Visible=false
@@ -630,7 +635,7 @@ createTopBtn("X",Color3.fromRGB(255,90,90),UDim2.new(1,-28,0,5),function()
 end)
 print("[FastHub] hub wiring done")
 
--- ==== GAME LOGIC (all tabs with SCROLLING content area) ====
+-- ==== GAME LOGIC (SCROLLABLE tabs) ====
 xpcall(function()
 
 local TF=Instance.new("Frame",MF)
@@ -642,16 +647,15 @@ TF.BorderSizePixel=0
 local TFL=Instance.new("UIListLayout",TF)
 TFL.Padding=UDim.new(0,6)
 
--- PC is now a ScrollingFrame (fixes tab overflow)
+-- ScrollingFrame with manual canvas size update (reliable)
 local PC=Instance.new("ScrollingFrame",MF)
 PC.Size=UDim2.new(1,-120,1,-45)
 PC.Position=UDim2.new(0,110,0,40)
 PC.BackgroundTransparency=1
 PC.ScrollBarThickness=4
 PC.ScrollBarImageColor3=AC
-PC.CanvasSize=UDim2.new(0,0,0,0)
-PC.AutomaticCanvasSize=Enum.AutomaticSize.Y
 PC.BorderSizePixel=0
+PC.CanvasSize=UDim2.new(0,0,0,0)
 
 -- Non-blocking knit service lookup
 local CE,RE
@@ -680,6 +684,19 @@ end
 
 local tabs={}
 local cur=nil
+local function updateCanvas()
+	-- Set canvas to the visible tab's absolute height + padding
+	for _,t in pairs(tabs) do
+		if t.pg.Visible then
+			local h = t.pg.AbsoluteSize.Y + 10
+			PC.CanvasSize = UDim2.new(0,0,0,math.max(h, PC.AbsoluteSize.Y + 1))
+			-- ^ keep canvas at least as tall as the viewport so it never feels stuck
+			return
+		end
+	end
+	PC.CanvasSize = UDim2.new(0,0,0,PC.AbsoluteSize.Y + 1)
+end
+
 local function AddTab(n)
 	local pg=Instance.new("Frame",PC)
 	pg.Size=UDim2.new(1,0,0,0)
@@ -687,6 +704,12 @@ local function AddTab(n)
 	pg.Visible=false
 	pg.AutomaticSize=Enum.AutomaticSize.Y
 	Instance.new("UIListLayout",pg).Padding=UDim.new(0,8)
+	-- Update canvas whenever children change
+	local ls=Instance.new("UISizeConstraint",pg) -- dummy to detect size changes
+	pg.DescendantAdded:Connect(updateCanvas)
+	pg.ChildAdded:Connect(updateCanvas)
+	pg.ChildRemoved:Connect(updateCanvas)
+	
 	local b=Instance.new("TextButton",TF)
 	b.Size=UDim2.new(1,-8,0,36)
 	b.Position=UDim2.new(0,4,0,0)
@@ -716,6 +739,9 @@ local function AddTab(n)
 		b.TextColor3=AC
 		TS:Create(bs,TweenInfo.new(0.15),{Transparency=0.2}):Play()
 		TS:Create(ind,TweenInfo.new(0.15),{BackgroundTransparency=0}):Play()
+		-- update canvas immediately
+		task.wait(0.05)
+		updateCanvas()
 	end)
 	tabs[n]={pg=pg,b=b,bs=bs,ind=ind}
 	if not cur then
@@ -724,6 +750,8 @@ local function AddTab(n)
 		bs.Transparency=0.2
 		ind.BackgroundTransparency=0
 		cur=n
+		task.wait(0.05)
+		updateCanvas()
 	end
 	return pg
 end
@@ -1105,13 +1133,13 @@ GRAD(HDCB,Color3.fromRGB(88,101,242),Color3.fromRGB(60,70,200),90)
 STK(HDCB,Color3.new(1,1,1),1.5,0.5)
 local HLink=Instance.new("TextLabel",HInfo)
 HLink.Size=UDim2.new(1,0,0,20)
-HLink.Text="https://discord.gg/zGKNwPCJ7"
+HLink.Text="https://discord.gg/JszAabwvS"
 HLink.TextColor3=DK
 HLink.Font=Enum.Font.Gotham
 HLink.TextSize=9
 HLink.BackgroundTransparency=1
 hook(HDCB,"Activated",function()
-	local link="https://discord.gg/zGKNwPCJ7"
+	local link="https://discord.gg/JszAabwvS"
 	copyText(link)
 	notify("discord server invite link copied."..link.."                   Paste it into your browser<3.",6)
 end)
