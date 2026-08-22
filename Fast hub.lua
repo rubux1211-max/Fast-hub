@@ -1,7 +1,7 @@
 -- ============================================================
---  FAST HUB V1.0 — MOBILE + PC BUILD
---  Fixed: responsive sizing, LFH removed, Discord info tab,
---         clipboard copy, anti-AFK renamed, all buttons touch-safe
+--  FAST HUB V1.0 — FINAL MOBILE+PC BUILD
+--  Fixes: scrollable tabs, moving aura borders (both hub +
+--  launcher), iOS clipboard fallback, centered buttons
 -- ============================================================
 local P=game:GetService("Players")
 local TS=game:GetService("TweenService")
@@ -21,21 +21,22 @@ local function hook(obj,ev,fn)
 	return ok
 end
 
--- Safe clipboard (works on Delta, Synapse, ScriptWare, etc.)
+-- iOS-safe copy: tries all executors, then shows link in notification
 local function copyText(txt)
 	local ok
 	ok=pcall(function() syn.writeclipboard(txt) end) if ok then return end
 	ok=pcall(function() setclipboard(txt) end) if ok then return end
 	ok=pcall(function() clipboard.set(txt) end) if ok then return end
 	ok=pcall(function() toclipboard(txt) end) if ok then return end
-	print("[FastHub] clipboard function not found — link: "..txt)
+	-- iOS fallback: show full link so user can manually copy
+	print("[FastHub] link: "..txt)
 end
 
--- Notification overlay (shows a message for N seconds)
+-- Notification overlay (shows message for N seconds)
 local function notify(msg,sec)
 	local nf=Instance.new("Frame",SG)
-	nf.Size=UDim2.new(0,280,0,44)
-	nf.Position=UDim2.new(0.5,-140,0.75,-22)
+	nf.Size=UDim2.new(0,300,0,50)
+	nf.Position=UDim2.new(0.5,-150,0.75,-25)
 	nf.BackgroundColor3=Color3.fromRGB(10,12,17)
 	nf.BackgroundTransparency=0.1
 	nf.BorderSizePixel=0
@@ -44,14 +45,16 @@ local function notify(msg,sec)
 	STK(nf,Color3.fromRGB(0,255,136),1.5,0.3)
 	GRAD(nf,Color3.fromRGB(10,12,17),Color3.fromRGB(18,21,28),90)
 	local nl=Instance.new("TextLabel",nf)
-	nl.Size=UDim2.new(1,0,1,0)
+	nl.Size=UDim2.new(1,-10,1,0)
+	nl.Position=UDim2.new(0,5,0,0)
 	nl.Text=msg
 	nl.TextColor3=Color3.fromRGB(240,244,250)
 	nl.Font=Enum.Font.GothamBold
-	nl.TextSize=13
+	nl.TextSize=11
 	nl.BackgroundTransparency=1
 	nl.ZIndex=51
-	task.delay(sec or 5,function()
+	nl.TextWrapped=true
+	task.delay(sec or 6,function()
 		TS:Create(nf,TweenInfo.new(0.3,Enum.EasingStyle.Sine),{BackgroundTransparency=1}):Play()
 		task.wait(0.3)
 		nf:Destroy()
@@ -109,7 +112,7 @@ local HUBOPEN=false
 local LOPEN=true
 local showHub,hideLauncher,showLauncher,closeAll
 
--- ==== HUB (responsive: 360 wide for iPhone 8 fit) ====
+-- ==== HUB ====
 local MF=Instance.new("Frame",SG)
 MF.Size=UDim2.new(0,360,0,220)
 MF.Position=UDim2.new(0.5,-180,0.4,-110)
@@ -120,19 +123,20 @@ MF.Active=true
 MF.Draggable=true
 MF.ZIndex=1
 MF.Visible=false
-local HALO=Instance.new("Frame",SG)
-HALO.Size=UDim2.new(0,376,0,236)
-HALO.Position=UDim2.new(0.5,-188,0.4,-118)
+COR(MF,12)
+STK(MF,AC,1.5,0.4)
+GRAD(MF,BG,Color3.fromRGB(16,20,28),90)
+
+-- HALO: parented to MF, moves automatically when MF is dragged
+local HALO=Instance.new("Frame",MF)
+HALO.Size=UDim2.new(1,16,1,16)
+HALO.Position=UDim2.new(0,-8,0,-8)
 HALO.BackgroundColor3=AC
 HALO.BackgroundTransparency=0.85
 HALO.BorderSizePixel=0
 HALO.ZIndex=0
-HALO.Visible=false
 COR(HALO,14)
 STK(HALO,AC,1,0.75)
-COR(MF,12)
-STK(MF,AC,1.5,0.4)
-GRAD(MF,BG,Color3.fromRGB(16,20,28),90)
 
 local function BRK(p)
 	local b=Instance.new("Frame",MF)
@@ -264,12 +268,11 @@ showHub=function()
 	hideLauncher()
 	HUBOPEN=true
 	MF.Visible=true
-	HALO.Visible=true
 	MF.Size=UDim2.new(0,0,0,0)
 	TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,360,0,220)}):Play()
 end
 
--- ==== LAUNCHER (NO neon green background — removed LFH) ====
+-- ==== LAUNCHER (no separate LFH — glow is child of LF) ====
 local LF=Instance.new("Frame",SG)
 LF.Size=UDim2.new(0,300,0,344)
 LF.Position=UDim2.new(0.5,-150,0.4,-172)
@@ -282,6 +285,19 @@ LF.ZIndex=1
 COR(LF,14)
 STK(LF,AC,1,0.4)
 GRAD(LF,BG,Color3.fromRGB(16,20,28),90)
+
+-- Launcher glow: parented to LF, moves automatically
+local LFGLOW=Instance.new("Frame",LF)
+LFGLOW.Size=UDim2.new(1,16,1,16)
+LFGLOW.Position=UDim2.new(0,-8,0,-8)
+LFGLOW.BackgroundColor3=AC
+LFGLOW.BackgroundTransparency=0.88
+LFGLOW.BorderSizePixel=0
+LFGLOW.ZIndex=0
+COR(LFGLOW,16)
+STK(LFGLOW,AC,1,0.75)
+PULSE(LFGLOW,0.9,0.75,1.4,function()return LOPEN end)
+
 local LH=Instance.new("Frame",LF)
 LH.Size=UDim2.new(1,0,0,40)
 LH.BackgroundColor3=FR
@@ -407,7 +423,7 @@ GBO.Text=""
 GBO.BorderSizePixel=0
 GBO.ZIndex=5
 
--- LAUNCHER INFO TAB (replaced with dev message + Discord button)
+-- LAUNCHER INFO TAB
 local IP=Instance.new("Frame",LC)
 IP.Size=UDim2.new(1,0,1,0)
 IP.BackgroundTransparency=1
@@ -535,11 +551,11 @@ end)
 -- Close button (X) in launcher
 hook(LX,"Activated",closeAll)
 
--- Discord button in launcher Info tab (UPDATED MESSAGE)
+-- Discord button in launcher Info tab
 hook(DCB,"Activated",function()
 	local link="https://discord.gg/zGKNwPCJ7"
 	copyText(link)
-	notify("discord server invite link copied."..link.."                   Paste it into your browser<3.",5)
+	notify("discord server invite link copied."..link.."                   Paste it into your browser<3.",6)
 end)
 
 -- Hover effects (silent if they fail)
@@ -564,26 +580,7 @@ pcall(function()
 	end)
 end)
 
--- Pulse on launcher border (replaces LFH pulse — now LF has it directly)
-local LPULSE=Instance.new("Frame",SG)
-LPULSE.Size=LF.Size+UDim2.new(0,16,0,16)
-LPULSE.Position=LF.Position-UDim2.new(0,8,0,8)
-LPULSE.BackgroundColor3=AC
-LPULSE.BackgroundTransparency=0.88
-LPULSE.BorderSizePixel=0
-LPULSE.ZIndex=0
-COR(LPULSE,16)
-STK(LPULSE,AC,1,0.75)
-PULSE(LPULSE,0.9,0.75,1.4,function()return LOPEN end)
--- sync LPULSE position/size with LF
-local function syncPulse()
-	LPULSE.Size=LF.Size+UDim2.new(0,16,0,16)
-	LPULSE.Position=LF.Position-UDim2.new(0,8,0,8)
-end
-LF:GetPropertyChangedSignal("Size"):Connect(syncPulse)
-LF:GetPropertyChangedSignal("Position"):Connect(syncPulse)
-
-print("[FastHub] launcher done (no green bg)")
+print("[FastHub] launcher done")
 
 -- ==== HUB WIRING ====
 local OD,OG
@@ -607,14 +604,13 @@ hook(OB,"InputEnded",function(i)
 			OH.Visible=false
 			ORR.Visible=false
 			MF.Visible=true
-			HALO.Visible=true
 			MF.Size=UDim2.new(0,0,0,0)
 			TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,360,0,220)}):Play()
 		end
 		OD=nil
 	end
 end)
-createTopBtn("–",Color3.fromRGB(90,220,160),UDim2.new(1,-56,0,6.5),function()
+createTopBtn("–",Color3.fromRGB(90,220,160),UDim2.new(1,-56,0,5),function()
 	MF.Visible=false
 	HALO.Visible=false
 	OB.Visible=true
@@ -623,11 +619,10 @@ createTopBtn("–",Color3.fromRGB(90,220,160),UDim2.new(1,-56,0,6.5),function()
 	OB.Size=UDim2.new(0,0,0,0)
 	TS:Create(OB,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,60,0,60)}):Play()
 end)
-createTopBtn("X",Color3.fromRGB(255,90,90),UDim2.new(1,-28,0,6.5),function()
+createTopBtn("X",Color3.fromRGB(255,90,90),UDim2.new(1,-28,0,5),function()
 	_G.FarmActive,_G.RebirthActive,_G.LootActive=false,false,false
 	HUBOPEN=false
 	MF.Visible=false
-	HALO.Visible=false
 	OB.Visible=false
 	OH.Visible=false
 	ORR.Visible=false
@@ -635,7 +630,7 @@ createTopBtn("X",Color3.fromRGB(255,90,90),UDim2.new(1,-28,0,6.5),function()
 end)
 print("[FastHub] hub wiring done")
 
--- ==== GAME LOGIC (all tabs + Info/About tab in hub) ====
+-- ==== GAME LOGIC (all tabs with SCROLLING content area) ====
 xpcall(function()
 
 local TF=Instance.new("Frame",MF)
@@ -646,10 +641,17 @@ TF.BackgroundTransparency=0.35
 TF.BorderSizePixel=0
 local TFL=Instance.new("UIListLayout",TF)
 TFL.Padding=UDim.new(0,6)
-local PC=Instance.new("Frame",MF)
+
+-- PC is now a ScrollingFrame (fixes tab overflow)
+local PC=Instance.new("ScrollingFrame",MF)
 PC.Size=UDim2.new(1,-120,1,-45)
 PC.Position=UDim2.new(0,110,0,40)
 PC.BackgroundTransparency=1
+PC.ScrollBarThickness=4
+PC.ScrollBarImageColor3=AC
+PC.CanvasSize=UDim2.new(0,0,0,0)
+PC.AutomaticCanvasSize=Enum.AutomaticSize.Y
+PC.BorderSizePixel=0
 
 -- Non-blocking knit service lookup
 local CE,RE
@@ -680,9 +682,10 @@ local tabs={}
 local cur=nil
 local function AddTab(n)
 	local pg=Instance.new("Frame",PC)
-	pg.Size=UDim2.new(1,0,1,0)
+	pg.Size=UDim2.new(1,0,0,0)
 	pg.BackgroundTransparency=1
 	pg.Visible=false
+	pg.AutomaticSize=Enum.AutomaticSize.Y
 	Instance.new("UIListLayout",pg).Padding=UDim.new(0,8)
 	local b=Instance.new("TextButton",TF)
 	b.Size=UDim2.new(1,-8,0,36)
@@ -1078,7 +1081,7 @@ CreateToggle(MP,"Anti-AFK","AntiAFK",function()
 	end)
 end)
 
--- === INFO TAB (hub) — same Discord content (UPDATED MESSAGE) ===
+-- === INFO TAB (hub) ===
 local HInfo=AddTab("Info")
 local HInfoMsg=Instance.new("TextLabel",HInfo)
 HInfoMsg.Size=UDim2.new(1,0,0,80)
@@ -1110,7 +1113,7 @@ HLink.BackgroundTransparency=1
 hook(HDCB,"Activated",function()
 	local link="https://discord.gg/zGKNwPCJ7"
 	copyText(link)
-	notify("discord server invite link copied."..link.."                   Paste it into your browser<3.",5)
+	notify("discord server invite link copied."..link.."                   Paste it into your browser<3.",6)
 end)
 pcall(function()
 	HDCB.MouseEnter:Connect(function()
