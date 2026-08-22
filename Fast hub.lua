@@ -1,9 +1,7 @@
 -- ============================================================
---  FAST HUB V1.0 — MOBILE HARDENED (Delta/iOS)
---  * ALL buttons use Activated (touch + mouse)
---  * every connection is crash-isolated (hook)
---  * search filter uses polling (no TextBox events)
---  * stage prints so you can see how far it loads
+--  FAST HUB V1.0 — MOBILE + PC BUILD
+--  Fixed: responsive sizing, LFH removed, Discord info tab,
+--         clipboard copy, anti-AFK renamed, all buttons touch-safe
 -- ============================================================
 local P=game:GetService("Players")
 local TS=game:GetService("TweenService")
@@ -13,21 +11,54 @@ local PPS=game:GetService("ProximityPromptService")
 local LP=P.LocalPlayer
 print("[FastHub] boot OK")
 
--- safe connection helper: never lets one bad event kill the script
 local function hook(obj,ev,fn)
 	local ok,s=pcall(function()
 		local sig=obj[ev]
-		if typeof(sig)=="RBXScriptSignal" then
-			sig:Connect(fn)
-		else
-			error("no signal: "..ev)
-		end
+		if typeof(sig)=="RBXScriptSignal" then sig:Connect(fn)
+		else error("no signal: "..ev) end
 	end)
 	if not ok then print("[FastHub] ! hook failed: "..ev.." -> "..tostring(s)) end
 	return ok
 end
 
--- GUI parent: CoreGui first (game GUIs can't block clicks)
+-- Safe clipboard (works on Delta, Synapse, ScriptWare, etc.)
+local function copyText(txt)
+	local ok
+	ok=pcall(function() syn.writeclipboard(txt) end) if ok then return end
+	ok=pcall(function() setclipboard(txt) end) if ok then return end
+	ok=pcall(function() clipboard.set(txt) end) if ok then return end
+	ok=pcall(function() toclipboard(txt) end) if ok then return end
+	print("[FastHub] clipboard function not found — link: "..txt)
+end
+
+-- Notification overlay (shows a message for N seconds)
+local function notify(msg,sec)
+	local nf=Instance.new("Frame",SG)
+	nf.Size=UDim2.new(0,280,0,44)
+	nf.Position=UDim2.new(0.5,-140,0.75,-22)
+	nf.BackgroundColor3=Color3.fromRGB(10,12,17)
+	nf.BackgroundTransparency=0.1
+	nf.BorderSizePixel=0
+	nf.ZIndex=50
+	COR(nf,10)
+	STK(nf,Color3.fromRGB(0,255,136),1.5,0.3)
+	GRAD(nf,Color3.fromRGB(10,12,17),Color3.fromRGB(18,21,28),90)
+	local nl=Instance.new("TextLabel",nf)
+	nl.Size=UDim2.new(1,0,1,0)
+	nl.Text=msg
+	nl.TextColor3=Color3.fromRGB(240,244,250)
+	nl.Font=Enum.Font.GothamBold
+	nl.TextSize=13
+	nl.BackgroundTransparency=1
+	nl.ZIndex=51
+	task.delay(sec or 5,function()
+		TS:Create(nf,TweenInfo.new(0.3,Enum.EasingStyle.Sine),{BackgroundTransparency=1}):Play()
+		task.wait(0.3)
+		nf:Destroy()
+	end)
+end
+
+-- GUI parent
 local SG
 local okCG=pcall(function()
 	local cg=game:GetService("CoreGui")
@@ -45,7 +76,7 @@ SG.Name="FastHub"
 SG.ResetOnSpawn=false
 SG.IgnoreGuiInset=true
 SG.DisplayOrder=999
-print("[FastHub] GUI ready (parent: "..SG.Parent.Name..")")
+print("[FastHub] GUI ready ("..SG.Parent.Name..")")
 
 local BG=Color3.fromRGB(10,12,17)
 local FR=Color3.fromRGB(18,21,28)
@@ -78,10 +109,10 @@ local HUBOPEN=false
 local LOPEN=true
 local showHub,hideLauncher,showLauncher,closeAll
 
--- ==== HUB UI (hidden until opened) ====
+-- ==== HUB (responsive: 360 wide for iPhone 8 fit) ====
 local MF=Instance.new("Frame",SG)
-MF.Size=UDim2.new(0,380,0,220)
-MF.Position=UDim2.new(0.5,-190,0.4,-110)
+MF.Size=UDim2.new(0,360,0,220)
+MF.Position=UDim2.new(0.5,-180,0.4,-110)
 MF.BackgroundColor3=BG
 MF.BackgroundTransparency=0.35
 MF.BorderSizePixel=0
@@ -90,8 +121,8 @@ MF.Draggable=true
 MF.ZIndex=1
 MF.Visible=false
 local HALO=Instance.new("Frame",SG)
-HALO.Size=UDim2.new(0,396,0,236)
-HALO.Position=UDim2.new(0.5,-198,0.4,-118)
+HALO.Size=UDim2.new(0,376,0,236)
+HALO.Position=UDim2.new(0.5,-188,0.4,-118)
 HALO.BackgroundColor3=AC
 HALO.BackgroundTransparency=0.85
 HALO.BorderSizePixel=0
@@ -102,6 +133,7 @@ STK(HALO,AC,1,0.75)
 COR(MF,12)
 STK(MF,AC,1.5,0.4)
 GRAD(MF,BG,Color3.fromRGB(16,20,28),90)
+
 local function BRK(p)
 	local b=Instance.new("Frame",MF)
 	b.Size=UDim2.new(0,14,0,14)
@@ -115,6 +147,7 @@ BRK(UDim2.new(0,7,0,7))
 BRK(UDim2.new(1,-21,0,7))
 BRK(UDim2.new(0,7,1,-21))
 BRK(UDim2.new(1,-21,1,-21))
+
 local TB=Instance.new("Frame",MF)
 TB.Size=UDim2.new(1,0,0,35)
 TB.BackgroundColor3=FR
@@ -146,6 +179,7 @@ TBT.Font=Enum.Font.GothamBlack
 TBT.TextSize=13
 TBT.TextXAlignment=Enum.TextXAlignment.Left
 GRAD(TBT,Color3.fromRGB(255,255,255),Color3.fromRGB(120,255,200),0)
+
 local function createTopBtn(t,c,p,cb)
 	local b=Instance.new("TextButton",TB)
 	b.Size=UDim2.new(0,22,0,22)
@@ -169,6 +203,7 @@ local function createTopBtn(t,c,p,cb)
 	end)
 	return b
 end
+
 local OB=Instance.new("TextButton",SG)
 OB.Size=UDim2.new(0,60,0,60)
 OB.Position=UDim2.new(0,20,0.5,-30)
@@ -200,6 +235,7 @@ OI.TextColor3=Color3.new(1,1,1)
 OI.Font=Enum.Font.GothamBold
 OI.TextSize=24
 OI.BackgroundTransparency=1
+
 local function SPIN(f,t,g)
 	task.spawn(function()
 		while f.Parent do
@@ -223,27 +259,17 @@ end
 SPIN(ORR,10,function()return HUBOPEN end)
 PULSE(OH,0.75,0.55,1.2,function()return HUBOPEN end)
 PULSE(HALO,0.88,0.7,1.6,function()return HUBOPEN end)
+
 showHub=function()
-	print("[FastHub] >>> opening hub")
 	hideLauncher()
 	HUBOPEN=true
 	MF.Visible=true
 	HALO.Visible=true
 	MF.Size=UDim2.new(0,0,0,0)
-	TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()
+	TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,360,0,220)}):Play()
 end
-print("[FastHub] hub UI built")
 
--- ==== LAUNCHER UI ====
-local LFH=Instance.new("Frame",SG)
-LFH.Size=UDim2.new(0,316,0,360)
-LFH.Position=UDim2.new(0.5,-158,0.4,-180)
-LFH.BackgroundColor3=AC
-LFH.BackgroundTransparency=0.88
-LFH.BorderSizePixel=0
-LFH.ZIndex=0
-COR(LFH,16)
-STK(LFH,AC,1,0.75)
+-- ==== LAUNCHER (NO neon green background — removed LFH) ====
 local LF=Instance.new("Frame",SG)
 LF.Size=UDim2.new(0,300,0,344)
 LF.Position=UDim2.new(0.5,-150,0.4,-172)
@@ -310,6 +336,7 @@ LX.Font=Enum.Font.GothamBold
 LX.TextSize=12
 COR(LX,7)
 STK(LX,Color3.new(1,1,1),1,0.8)
+
 local LC=Instance.new("Frame",LF)
 LC.Size=UDim2.new(1,-16,1,-96)
 LC.Position=UDim2.new(0,8,0,48)
@@ -379,25 +406,41 @@ GBO.BackgroundTransparency=1
 GBO.Text=""
 GBO.BorderSizePixel=0
 GBO.ZIndex=5
+
+-- LAUNCHER INFO TAB (replaced with dev message + Discord button)
 local IP=Instance.new("Frame",LC)
 IP.Size=UDim2.new(1,0,1,0)
 IP.BackgroundTransparency=1
 IP.Visible=false
-Instance.new("UIListLayout",IP).Padding=UDim.new(0,6)
+local IPL=Instance.new("UIListLayout",IP)
+IPL.Padding=UDim.new(0,8)
 local IT1=Instance.new("TextLabel",IP)
-IT1.Size=UDim2.new(1,0,0,24)
-IT1.Text="FAST HUB v1.0"
-IT1.TextColor3=AC
-IT1.Font=Enum.Font.GothamBlack
-IT1.TextSize=15
+IT1.Size=UDim2.new(1,0,0,80)
+IT1.Text="Fast Hub is still in active development and may encounter crashes, not working, or any bugs. Please tell us those bugs in our Discord server."
+IT1.TextColor3=TX
+IT1.Font=Enum.Font.Gotham
+IT1.TextSize=13
 IT1.BackgroundTransparency=1
-local IT2=Instance.new("TextLabel",IP)
-IT2.Size=UDim2.new(1,0,0,40)
-IT2.Text="Auto Farm • Teleport • Auto Loot"
-IT2.TextColor3=TX
-IT2.Font=Enum.Font.Gotham
-IT2.TextSize=12
-IT2.BackgroundTransparency=1
+IT1.TextWrapped=true
+local DCB=Instance.new("TextButton",IP)
+DCB.Size=UDim2.new(1,0,0,44)
+DCB.BackgroundColor3=Color3.fromRGB(88,101,242)
+DCB.BackgroundTransparency=0.15
+DCB.BorderSizePixel=0
+DCB.Text="JOIN DISCORD"
+DCB.TextColor3=Color3.new(1,1,1)
+DCB.Font=Enum.Font.GothamBlack
+DCB.TextSize=14
+COR(DCB,10)
+GRAD(DCB,Color3.fromRGB(88,101,242),Color3.fromRGB(60,70,200),90)
+STK(DCB,Color3.new(1,1,1),1.5,0.5)
+local DCBL=Instance.new("TextLabel",IP)
+DCBL.Size=UDim2.new(1,0,0,20)
+DCBL.Text="https://discord.gg/zGKNwPCJ7"
+DCBL.TextColor3=DK
+DCBL.Font=Enum.Font.Gotham
+DCBL.TextSize=9
+DCBL.BackgroundTransparency=1
 local STL=Instance.new("TextLabel",IP)
 STL.Size=UDim2.new(1,0,0,20)
 STL.Text="Status: loading..."
@@ -405,6 +448,7 @@ STL.TextColor3=DK
 STL.Font=Enum.Font.GothamBold
 STL.TextSize=11
 STL.BackgroundTransparency=1
+
 local LTABS=Instance.new("Frame",LF)
 LTABS.Size=UDim2.new(1,-16,0,38)
 LTABS.Position=UDim2.new(0,8,1,-42)
@@ -428,7 +472,6 @@ BTI.TextColor3=DK
 BTI.Font=Enum.Font.GothamBold
 BTI.TextSize=13
 COR(BTI,10)
-print("[FastHub] launcher UI built")
 
 -- ==== LAUNCHER WIRING ====
 local function setL(g)
@@ -454,22 +497,21 @@ local function setL(g)
 end
 hook(BTL,"Activated",function()setL(true)end)
 hook(BTI,"Activated",function()setL(false)end)
+
 hideLauncher=function()
 	LOPEN=false
 	LF.Visible=false
-	LFH.Visible=false
 end
 showLauncher=function()
 	LOPEN=true
 	LF.Visible=true
-	LFH.Visible=true
 end
 closeAll=function()
-	print("[FastHub] closing (X tapped)")
 	_G.FarmActive,_G.RebirthActive,_G.LootActive=false,false,false
 	SG:Destroy()
 end
--- search filter: polling loop (no TextBox events — that's what was crashing)
+
+-- Search polling (safe — no TextBox event crash)
 task.spawn(function()
 	while SB and SB.Parent do
 		task.wait(0.4)
@@ -477,9 +519,9 @@ task.spawn(function()
 		GBRow.Visible=(q=="")or string.find("+1 cut grass adventure",q,1,true)~=nil
 	end
 end)
--- the game card — THE button you've been tapping
+
+-- Game card tap
 hook(GBO,"Activated",function()
-	print("[FastHub] >>> GAME CARD TAPPED")
 	pcall(function()
 		if SB:IsFocused() then SB:ReleaseFocus() end
 		TS:Create(GBRow,TweenInfo.new(0.1),{BackgroundColor3=AC,BackgroundTransparency=0.1}):Play()
@@ -489,7 +531,18 @@ hook(GBO,"Activated",function()
 	end)
 	showHub()
 end)
+
+-- Close button (X) in launcher
 hook(LX,"Activated",closeAll)
+
+-- Discord button in launcher Info tab (UPDATED MESSAGE)
+hook(DCB,"Activated",function()
+	local link="https://discord.gg/zGKNwPCJ7"
+	copyText(link)
+	notify("discord server invite link copied."..link.."                   Paste it into your browser<3.",5)
+end)
+
+-- Hover effects (silent if they fail)
 pcall(function()
 	LX.MouseEnter:Connect(function()
 		TS:Create(LX,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(255,90,90),BackgroundTransparency=0}):Play()
@@ -503,9 +556,34 @@ pcall(function()
 	GBO.MouseLeave:Connect(function()
 		TS:Create(GBRow,TweenInfo.new(0.12),{Size=UDim2.new(1,0,0,48)}):Play()
 	end)
+	DCB.MouseEnter:Connect(function()
+		TS:Create(DCB,TweenInfo.new(0.12),{Size=UDim2.new(1,-6,0,44)}):Play()
+	end)
+	DCB.MouseLeave:Connect(function()
+		TS:Create(DCB,TweenInfo.new(0.12),{Size=UDim2.new(1,0,0,44)}):Play()
+	end)
 end)
-PULSE(LFH,0.9,0.75,1.4,function()return LOPEN end)
-print("[FastHub] launcher wiring done")
+
+-- Pulse on launcher border (replaces LFH pulse — now LF has it directly)
+local LPULSE=Instance.new("Frame",SG)
+LPULSE.Size=LF.Size+UDim2.new(0,16,0,16)
+LPULSE.Position=LF.Position-UDim2.new(0,8,0,8)
+LPULSE.BackgroundColor3=AC
+LPULSE.BackgroundTransparency=0.88
+LPULSE.BorderSizePixel=0
+LPULSE.ZIndex=0
+COR(LPULSE,16)
+STK(LPULSE,AC,1,0.75)
+PULSE(LPULSE,0.9,0.75,1.4,function()return LOPEN end)
+-- sync LPULSE position/size with LF
+local function syncPulse()
+	LPULSE.Size=LF.Size+UDim2.new(0,16,0,16)
+	LPULSE.Position=LF.Position-UDim2.new(0,8,0,8)
+end
+LF:GetPropertyChangedSignal("Size"):Connect(syncPulse)
+LF:GetPropertyChangedSignal("Position"):Connect(syncPulse)
+
+print("[FastHub] launcher done (no green bg)")
 
 -- ==== HUB WIRING ====
 local OD,OG
@@ -531,7 +609,7 @@ hook(OB,"InputEnded",function(i)
 			MF.Visible=true
 			HALO.Visible=true
 			MF.Size=UDim2.new(0,0,0,0)
-			TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,380,0,220)}):Play()
+			TS:Create(MF,TweenInfo.new(0.35,Enum.EasingStyle.Back),{Size=UDim2.new(0,360,0,220)}):Play()
 		end
 		OD=nil
 	end
@@ -557,7 +635,7 @@ createTopBtn("X",Color3.fromRGB(255,90,90),UDim2.new(1,-28,0,6.5),function()
 end)
 print("[FastHub] hub wiring done")
 
--- ==== GAME LOGIC (fully protected) ====
+-- ==== GAME LOGIC (all tabs + Info/About tab in hub) ====
 xpcall(function()
 
 local TF=Instance.new("Frame",MF)
@@ -573,7 +651,7 @@ PC.Size=UDim2.new(1,-120,1,-45)
 PC.Position=UDim2.new(0,110,0,40)
 PC.BackgroundTransparency=1
 
--- non-blocking knit service lookup (never freezes)
+-- Non-blocking knit service lookup
 local CE,RE
 do
 	local PKG=RS:FindFirstChild("Packages")
@@ -594,8 +672,8 @@ do
 			end
 		end
 	end
-	if CE then print("[FastHub] StrengthService OK") else print("[FastHub] ! StrengthService not found") end
-	if RE then print("[FastHub] RebirtService OK") else print("[FastHub] ! RebirtService not found") end
+	if CE then print("[FastHub] Strength OK") else print("[FastHub] ! Strength not found") end
+	if RE then print("[FastHub] Rebirth OK") else print("[FastHub] ! Rebirth not found") end
 end
 
 local tabs={}
@@ -695,6 +773,7 @@ local function CreateToggle(pp,txt,gv,cb)
 	end)
 end
 
+-- === FARMING ===
 local FP=AddTab("Farming")
 CreateToggle(FP,"Auto Strength","FarmActive",function()
 	while _G.FarmActive do
@@ -709,6 +788,7 @@ CreateToggle(FP,"Auto Rebirth","RebirthActive",function()
 	end
 end)
 
+-- === WORLDS ===
 local WC={
 	[1]={s=Vector3.new(-933,38,-7),b=Vector3.new(688,37,6)},
 	[2]={s=Vector3.new(-917,38,1705),b=Vector3.new(938,37,1702)}
@@ -809,6 +889,7 @@ local function CWS(pp)
 	hook(b2,"Activated",function()_G.SelectedWorld=2 RW()end)
 end
 
+-- === TELEPORT ===
 local TPg=AddTab("Teleport")
 CWS(TPg)
 local function CB(pp,txt,c1,c2,cb)
@@ -847,6 +928,7 @@ CB(TPg,"Teleport to Best Area",AC,AC2,function()
 	TP(w.b)
 end)
 
+-- === LOOT ===
 local PM={}
 local function SI(p)
 	if p then
@@ -980,9 +1062,10 @@ CreateToggle(LT,"Auto Collect Loot From Best Zone","LootActive",function()
 	_G.AntiGameplayPaused=false
 end)
 
+-- === MISC ===
 local MP=AddTab("Misc")
 local afkHooked=false
-CreateToggle(MP,"Anti-AFK Avoidance","AntiAFK",function()
+CreateToggle(MP,"Anti-AFK","AntiAFK",function()
 	if afkHooked then return end
 	afkHooked=true
 	local VU=game:GetService("VirtualUser")
@@ -995,16 +1078,60 @@ CreateToggle(MP,"Anti-AFK Avoidance","AntiAFK",function()
 	end)
 end)
 
+-- === INFO TAB (hub) — same Discord content (UPDATED MESSAGE) ===
+local HInfo=AddTab("Info")
+local HInfoMsg=Instance.new("TextLabel",HInfo)
+HInfoMsg.Size=UDim2.new(1,0,0,80)
+HInfoMsg.Text="Fast Hub is still in active development and may encounter crashes, not working, or any bugs. Please tell us those bugs in our Discord server."
+HInfoMsg.TextColor3=TX
+HInfoMsg.Font=Enum.Font.Gotham
+HInfoMsg.TextSize=13
+HInfoMsg.BackgroundTransparency=1
+HInfoMsg.TextWrapped=true
+local HDCB=Instance.new("TextButton",HInfo)
+HDCB.Size=UDim2.new(1,0,0,44)
+HDCB.BackgroundColor3=Color3.fromRGB(88,101,242)
+HDCB.BackgroundTransparency=0.15
+HDCB.BorderSizePixel=0
+HDCB.Text="JOIN DISCORD"
+HDCB.TextColor3=Color3.new(1,1,1)
+HDCB.Font=Enum.Font.GothamBlack
+HDCB.TextSize=14
+COR(HDCB,10)
+GRAD(HDCB,Color3.fromRGB(88,101,242),Color3.fromRGB(60,70,200),90)
+STK(HDCB,Color3.new(1,1,1),1.5,0.5)
+local HLink=Instance.new("TextLabel",HInfo)
+HLink.Size=UDim2.new(1,0,0,20)
+HLink.Text="https://discord.gg/zGKNwPCJ7"
+HLink.TextColor3=DK
+HLink.Font=Enum.Font.Gotham
+HLink.TextSize=9
+HLink.BackgroundTransparency=1
+hook(HDCB,"Activated",function()
+	local link="https://discord.gg/zGKNwPCJ7"
+	copyText(link)
+	notify("discord server invite link copied."..link.."                   Paste it into your browser<3.",5)
+end)
+pcall(function()
+	HDCB.MouseEnter:Connect(function()
+		TS:Create(HDCB,TweenInfo.new(0.12),{Size=UDim2.new(1,-6,0,44)}):Play()
+	end)
+	HDCB.MouseLeave:Connect(function()
+		TS:Create(HDCB,TweenInfo.new(0.12),{Size=UDim2.new(1,0,0,44)}):Play()
+	end)
+end)
+
 STL.Text="Status: READY"
 STL.TextColor3=AC
-print("[FastHub] tabs ready: Farming / Teleport / Loot / Misc")
+print("[FastHub] tabs ready: Farming / Teleport / Loot / Misc / Info")
 
 end, function(err)
-	STL.Text="Status: ERROR"
-	STL.TextColor3=Color3.fromRGB(255,90,90)
+	pcall(function()
+		STL.Text="Status: ERROR"
+		STL.TextColor3=Color3.fromRGB(255,90,90)
+	end)
 	print("[FastHub] game-logic ERROR: "..tostring(err))
 end)
 
--- manual fallback: type  _G.FastHubOpen()  in Delta's exec box if the card won't tap
 _G.FastHubOpen=showHub
-print("[FastHub] ALL DONE — tap the game card now")
+print("[FastHub] ALL DONE — tap the game card")
